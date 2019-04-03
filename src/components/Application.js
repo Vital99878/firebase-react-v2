@@ -1,19 +1,23 @@
 import React, { Component } from 'react';
-import Posts from './Posts';
-import { fireStore } from '../firebase';
+import { fireStore, firebaseAuth } from '../firebase';
 import { collectIdsAndDocs } from '../utilities';
+
+import Posts from './Posts';
+import Authentication from './Authentication';
 
 class Application extends Component {
   state = {
-    posts: []
+    posts: [],
+    user: null
   };
 
-  unsubscribe;
+  unsubscribeFireStore;
+  unsubscribeGoogleAuth;
 
   // handleCreate = async post => {
   //   const { posts } = this.state;
   //   const docRef = await fireStore.collection('posts').add(post);
-    
+
   //   // NOT NEEDED - We register to onSnapshot in componentDidMount!
   //   // const doc = await docRef.get();
   //   // const newPost = collectIdsAndDocs(doc);
@@ -25,7 +29,7 @@ class Application extends Component {
   //   // await doc.delete();
 
   //   await fireStore.doc(`posts/${id}`).delete();
-    
+
   //   // NOT NEEDED - We register to onSnapshot in componentDidMount!
   //   // this.setState({
   //   //   posts: this.state.posts.filter(p => p.id !== id)
@@ -38,22 +42,27 @@ class Application extends Component {
     // const posts = snapshot.docs.map(collectIdsAndDocs);
     // this.setState({ posts });
 
-    this.unsubscribe = fireStore.collection('posts').onSnapshot(snapshot => {
+    this.unsubscribeFireStore = fireStore.collection('posts').onSnapshot(snapshot => {
       const posts = snapshot.docs.map(collectIdsAndDocs);
       this.setState({ posts });
+    });
+
+    this.unsubscribeGoogleAuth = firebaseAuth.onAuthStateChanged(user => {
+      this.setState({ user });
     });
   };
 
   componentWillUnmount = () => {
-    this.unsubscribe();
+    this.unsubscribeFireStore();
   };
 
   render() {
     const { posts } = this.state;
 
     return (
-      <main className='Application'>
+      <main className="Application">
         <h1>Think Piece</h1>
+        <Authentication user={this.state.user} />
         <Posts posts={posts} />
       </main>
     );
